@@ -10,7 +10,7 @@
 
 ### Harvard Resume Format Generation 
 
-I will let GenIA do the heavy lifting since i am very comfortable working with HTML and generate out the HTML and possibly CSS and then from there i will manually refactor the code to my prefered statndard. 
+I will let GenIA do the heavy lifting in generating the HTML and possibly CSS since i am very comfortable working with HTML and then from there,  i will manually refactor the code to my prefered statndard. 
 
 Prompt to ChatGPT 5: 
 ```text
