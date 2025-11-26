@@ -1,6 +1,6 @@
 # Frontend Technical Specification
 
-- Create a static website that serves an html resume. 
+- Create a static website that serves an html résumé. 
 
 ## Resume Format Considerations 
 
@@ -8,13 +8,13 @@
 - I'm going to use the [Harvard resume template Format](https://docs.google.com/document/d/1rK2prBm6ga4EGdlbNZ66NS0_KBLrOCSf/edit) as a basis of my resume. 
 
 
-### Harvard Resume Format Generation 
+### Harvard Résumé Format Generation 
 
 I will let GenIA do the heavy lifting in generating the HTML and possibly CSS since i am very comfortable working with HTML and then from there,  i will manually refactor the code to my prefered statndard. 
 
 Prompt to ChatGPT 5: 
 ```text
-Convert this resume format to HTML. 
+Convert this résumé format to HTML. 
 Do not use a CSS framework. 
 Use the least amount of CSS tags. 
 ```
@@ -48,6 +48,7 @@ We need to serve our static website locally so we can start using stylesheets ex
 Assuming we have node installed, we will use the simple web-server http-server
 
 ### Install HTTP server 
+
 ```sh
 npm i http-server -g
 ```
@@ -62,7 +63,11 @@ cd frontend
 http-server
 ```
 
-## Image Size Considerations 
+### Image Size Considerations 
 
-I have a background texture that was 14MB. 
-I'm going to optimize it to webp with an online tool 
+I have a background texture image that is 14MB in size. 
+I'm going to optimize it to webp with an online tool. 
+
+Example of online tool: 
+https://cloudinary.com/tools/compress-webp
+
