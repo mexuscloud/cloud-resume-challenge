@@ -39,4 +39,30 @@ This is the generated HTML looks like unaltered.
 - We'll simplify our HTML CSS selector to be as minimal as possible. 
 - For the HTML page, i will use soft tabs and 2 spaces. 
 
+## Serve Static Website Locally 
 
+We need to serve our static website locally so we can start using stylesheets externally from our HTML page in a cloud developer environment (CDE)
+
+> This is not necessary with local development. 
+
+Assuming we have node installed, we will use the simple web-server http-server
+
+### Install HTTP server 
+```sh
+npm i http-server -g
+```
+https://www.npmjs.com/package/http-server
+
+### Serve Website 
+
+http-server will serve a public folder by default where the command is run. 
+
+```sh
+cd frontend
+http-server
+```
+
+## Image Size Considerations 
+
+I have a background texture that was 14MB. 
+I'm going to optimize it to webp with an online tool 
