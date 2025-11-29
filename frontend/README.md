@@ -71,3 +71,8 @@ I'm going to optimize it to webp with an online tool.
 Example of online tool: 
 https://cloudinary.com/tools/compress-webp
 
+## Frontend Framework Consideration 
+
+- Chose to use React because it's the most popular framwork. 
+- Chose to use Vite.js over Webpack because our frontend is very simple. 
+- Configuard React Roure V7 and decided to use declarative mode because again our app is very simple. 
