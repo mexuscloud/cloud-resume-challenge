@@ -1,0 +1,49 @@
+body[location='resume'] section.header {
+  text-align: center;
+  /* border-bottom: solid 1px rgb(0,0,0);  */
+  padding-bottom: 12px;
+}
+
+body[location='resume'] section.header p {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: center;
+}
+
+body[location='resume'] section h2 {
+  border-bottom: solid 1px rgb(0,0,0); 
+  padding: 8px 0px;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+body[location='resume'] section h3 {
+  font-size: 16px;
+}
+
+body[location='resume'] .item {
+  /* Andrw has has it as 12px 0px */
+  padding: 8px 0px;  
+}
+
+body[location='resume'] .item_heading {
+  display: flex; 
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+body[location='resume'] .item_heading .info, 
+body[location='resume'] .item_heading .details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+body[location='resume'] .item_heading .details {
+  text-align: right;
+}
+
+body[location='resume'] .item_heading .details .duration{
+  font-style: italic;
+}
