@@ -2,7 +2,7 @@ const resumeData = {
 person: {
     name: "Yemane Nigusse",
     contact: {
-        address: "560 La Grange Dr. Fate, TX 75087",
+        address: "560 La Grange Dr. <br /> Fate, TX 75087",
         email: "yemexx.tekile@gmail.com",
         phone: "+1 469-835-5228"
     },

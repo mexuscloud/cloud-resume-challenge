@@ -9,9 +9,9 @@ export default function ResumeHeader(props) {
     <section className="header">
       <h1>{ person.name }</h1>  
       <p>
-        <span className="address">{contact.address}</span>
+        <span className="address" dangerouslySetInnerHTML={{__html: contact.address}}/>
         <span className="bull">&bull;</span>
-        <span className="email"><a href="mailto:{contact.email}">contact.email</a></span>
+        <span className="email"><a href="mailto:{contact.email}">{contact.email}</a></span>
         <span className="bull">&bull;</span> 
         <span className="phone">{contact.phone}</span>
       </p>

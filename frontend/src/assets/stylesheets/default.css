@@ -1,3 +1,5 @@
+@import './pages/breakpoints.css';
+
 * {
   box-sizing: border-box;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
@@ -56,8 +58,6 @@ li {
 }
 
 div.content_wrap {
-
-  padding: 32px;
   height: 100%;
   width: 100%;
   overflow: auto;
@@ -70,12 +70,24 @@ div.content {
 }
 
 article {
-  width: 1000px;
   background: rgb(255, 255, 255);
-  box-shadow: 0px 1px 9px 1px rgba(0, 0, 0, 0.5);
   padding: 24px; 
   display: flex;
   flex-direction: column;
   gap: 16px; 
 }
 
+@media (--small-only) {
+    
+}
+
+@media (--medium-up) {
+  div.content_wrap {
+    padding: 32px;
+  }
+
+  article {
+    width: 1000px;
+    box-shadow: 0px 1px 9px 1px rgba(0, 0, 0, 0.5);
+  }
+}

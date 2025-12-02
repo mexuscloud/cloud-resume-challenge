@@ -1,0 +1,5 @@
+/* Phone only (below 768px) */
+@custom-media --small-only (width < 768px);
+
+/* Tablet and up (768px and above) */
+@custom-media --medium-up (width >= 768px);

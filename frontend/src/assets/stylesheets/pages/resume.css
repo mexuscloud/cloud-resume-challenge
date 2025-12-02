@@ -1,49 +1,93 @@
-body[location='resume'] section.header {
-  text-align: center;
-  /* border-bottom: solid 1px rgb(0,0,0);  */
-  padding-bottom: 12px;
+
+/* @custom-media --small-only (width < 768px);
+@custom-media --medium-up (width >= 768px); */
+
+@import './breakpoints.css'; 
+  
+body[location='resume'] {
+  section.header {
+    text-align: center;
+    padding-bottom: 12px;   
+    p {
+      display: flex;
+      gap: 8px;
+    }
+  }
 }
 
-body[location='resume'] section.header p {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  justify-content: center;
+/* section */
+section {
+  h2 {
+    border-bottom: solid 1px rgb(0,0,0); 
+    padding: 8px 0px;
+    font-size: 16px;
+    text-transform: uppercase;
+  }
+  h3 {
+    font-size: 16px;
+  }
 }
 
-body[location='resume'] section h2 {
-  border-bottom: solid 1px rgb(0,0,0); 
-  padding: 8px 0px;
-  font-size: 16px;
-  text-transform: uppercase;
-}
+/* .item */
 
-body[location='resume'] section h3 {
-  font-size: 16px;
-}
-
-body[location='resume'] .item {
-  /* Andrw has has it as 12px 0px */
+.item {
+  /* Andrew has has it as 12px 0px */
   padding: 8px 0px;  
 }
 
-body[location='resume'] .item_heading {
+/* .item_heading */
+
+.item_heading {
   display: flex; 
-  flex-direction: row;
-  justify-content: space-between;
+
+  .info, .details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .details .duration{
+    font-style: italic;
+  } 
 }
 
-body[location='resume'] .item_heading .info, 
-body[location='resume'] .item_heading .details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+
+@media (--small-only) {
+  body[location='resume'] {
+      section.header {
+      p {
+        flex-direction: column;
+        span.bull {display: none;}
+      }
+    }
+    .item_heading {
+      flex-direction: column;
+      .details {
+        flex-direction: row !important;
+        justify-content: space-between;
+        padding: 12px 0px;
+      }
+    }
+  }
 }
 
-body[location='resume'] .item_heading .details {
-  text-align: right;
+@media (--medium-up) {
+    body[location='resume'] {
+      section.header {
+      p {
+        flex-direction: row;
+        justify-content: center;
+        br {display: none;}
+      }
+    }
+    .item_heading {
+      flex-direction: row;
+      justify-content: space-between;
+      .details {
+        text-align: right;
+      } 
+    }
+  }
 }
 
-body[location='resume'] .item_heading .details .duration{
-  font-style: italic;
-}
+
