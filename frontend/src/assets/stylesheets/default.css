@@ -42,6 +42,10 @@ header nav {
 header nav a {
   padding: 24px;
   color: rgb(255, 255, 255);
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 header nav a.active {
@@ -55,6 +59,25 @@ ul {
 
 li {
   padding-bottom: 2px;
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 12px 32px;
+  background: rgb(0,0,0);
+  color: rgb(255,255,255);
+  align-self: flex-start;
+  text-decoration: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px; 
+  &.l-icon {
+    padding-left: 14px;
+  }
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 div.content_wrap {
