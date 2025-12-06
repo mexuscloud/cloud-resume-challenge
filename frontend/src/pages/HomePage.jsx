@@ -1,14 +1,13 @@
 import React from "react"; 
 import 'css/pages/home.css'
-import yemane_nigusse from 'images/Yemane-Nigusse.jpeg'
+import yemane_nigusse from 'images/yemane-nigusse-thumb.webp'
 
-export default function BlogPage() {
+export default function HomePage() {
   return (
     <>
-      <div class="profile_picture">
+      <div class="intro_video">
         <img src={yemane_nigusse} />
       </div>
-      
     </>
   )
 } 
