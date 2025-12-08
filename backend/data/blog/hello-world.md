@@ -1,7 +1,7 @@
 ---
 name: Hello World!
 handle: hello-world
-data: '2025-12-06'
+date: '2025-12-06'
 ---
 
 ## Hello World! 

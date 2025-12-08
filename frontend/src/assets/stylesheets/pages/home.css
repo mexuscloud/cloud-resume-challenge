@@ -1,5 +1,26 @@
 body[location='home'] {
-    .intro_video img {
-        width: 100%;
+  .intro_video img {
+      width: 100%;
+  }
+  .posts {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    .post_item {
+      display: flex;
+      flex-direction: row;
+      color: rgb(0,0,0);
+      text-decoration: none;
+      gap: 8px;
+      .name {
+        order: 2;
+      }
+      .date {
+        order: 1;
+      }
+      &:hover {
+        text-decoration: underline;
+      }
     }
+  }
 }
