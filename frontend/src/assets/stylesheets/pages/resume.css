@@ -2,7 +2,7 @@
 /* @custom-media --small-only (width < 768px);
 @custom-media --medium-up (width >= 768px); */
 
-@import './breakpoints.css'; 
+@import '../breakpoints.css'; 
   
 body[location='resume'] {
   section.header {

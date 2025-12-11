@@ -11,11 +11,11 @@ export default function ProjectPage() {
   const project = projectsData.find(p => p.handle === handle); 
   return (
     <>
-      <h1 className="fancy">Project: {project.name}</h1>  
       <NavLink className="btn l-icon" to={`/projects`}>
         <ChevronLeft />
         Back To All Projects
       </NavLink>
+      <h1 className="fancy">Project: {project.name}</h1>  
       <p>{project.description}</p>
       <div className="markdown" dangerouslySetInnerHTML={{__html: project.body_html}}/>
     </>

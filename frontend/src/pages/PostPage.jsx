@@ -10,12 +10,13 @@ export default function PostPage() {
 
   const post = blogData.find(p => p.handle === handle); 
   return (
-    <>  
-      <h1 className="fancy">{post.name}</h1>
+    <>
       <NavLink className="btn l-icon" to={`/`}>
         <ChevronLeft />
         Back To Home Page
       </NavLink>
+      <h1 className="fancy">{post.name}</h1>
+      <div className="date">{post.date}</div>
       <div className="markdown" dangerouslySetInnerHTML={{__html: post.body_html}}/>
     </>
   )

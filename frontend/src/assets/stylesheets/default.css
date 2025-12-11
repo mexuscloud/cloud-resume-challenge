@@ -1,4 +1,4 @@
-@import './pages/breakpoints.css';
+@import './breakpoints.css';
 
 * {
   box-sizing: border-box;
@@ -103,7 +103,7 @@ div.content {
 
 article {
   background: rgb(255, 255, 255);
-  padding: 24px; 
+  padding: 48px; 
   display: flex;
   flex-direction: column;
   gap: 16px; 

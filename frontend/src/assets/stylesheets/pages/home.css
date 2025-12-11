@@ -2,10 +2,39 @@ body[location='home'] {
   .intro_video img {
       width: 100%;
   }
+  .links {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+    a {
+      background: rgb(0,0,0);
+      color: rgb(255,255,255);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 64px;
+      width: 64px;
+      border-radius: 9999px;
+      transition:  background 0.3s ease;
+      &:hover {
+        background: rgb(118, 54, 54);
+      }
+      span.icon {
+        display: block;
+        width: 24px;
+        height: 24px;
+      }
+      span.name {
+        display: none;
+      }
+    }
+    
+  }
   .posts {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 12px;
     .post_item {
       display: flex;
       flex-direction: row;
@@ -14,6 +43,7 @@ body[location='home'] {
       gap: 8px;
       .name {
         order: 2;
+        font-weight: 600;
       }
       .date {
         order: 1;
