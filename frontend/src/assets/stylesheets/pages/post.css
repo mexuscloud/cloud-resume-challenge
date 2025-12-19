@@ -1,3 +1,5 @@
+@import '../breakpoints.css'; 
+
 body[location="blog_post"] {
     .date {
         text-align: center;
@@ -5,3 +7,29 @@ body[location="blog_post"] {
         color: rgb(160,160,160);
     }
 }
+
+@media (--small-only) {
+  body[location='blog_post'] {
+      .content {
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 0px 12px;
+      }
+    }
+  }
+
+/* @media (--medium-up) {
+    body[location='blog_post'] {
+      div.content_wrap {
+        padding: 32px;
+    }
+  }
+} */
+
+
+
+
+
+
+
+

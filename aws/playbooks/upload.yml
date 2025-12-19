@@ -10,6 +10,7 @@
     project_root: "{{ playbook_dir | realpath }}/../.."
     frontend_dir: "{{ project_root }}/frontend"
     build_dir: "{{ frontend_dir }}/dist"
+    cloudfront_distribution_id: EEPJN4BVONALN
   tasks:
     - name: Install node dependencies (clean, reproduible)
       community.general.npm:
@@ -41,7 +42,7 @@
         aws_secret_key: "{{ AWS_SECRET_ACCESS_KEY }}"
         bucket: "{{ bucket_name }}"
         file_root: "{{ build_dir }}"
-        exclude: "assets/**"
+        include: "assets/**"
         delete: true
         # For website bucket that are public 
         # permission: public-read
@@ -53,7 +54,7 @@
         region: "{{ AWS_REGION }}"
         aws_access_key: "{{ AWS_ACCESS_KEY_ID }}"
         aws_secret_key: "{{ AWS_SECRET_ACCESS_KEY }}"
-        bucket: "www.{{ bucket_name }}"
+        bucket: "{{ bucket_name }}"
         object: "index.html"
         src: "{{ build_dir }}/index.html"
         mode: put
@@ -71,5 +72,19 @@
           assets/**
         delete: false
       register: sync_misc
+      # CloudFront invalidation 
+    - name: Create CloudFront invalidation
+      community.aws.cloudfront_invalidation:
+        region: "{{ AWS_REGION }}"
+        aws_access_key: "{{ AWS_ACCESS_KEY_ID }}"
+        aws_secret_key: "{{ AWS_SECRET_ACCESS_KEY }}"
+        distribution_id: EEPJN4BVONALN
+        target_paths:
+          - "/*"
+        caller_reference: "{{ lookup('pipe', 'date +%s') }}"
+      register: invalidation_result
+    - name: Display invalidation ID
+      ansible.builtin.debug:
+        msg: "Created invalidation with ID: {{ invalidation_result.invalidation.id }}"
    
       

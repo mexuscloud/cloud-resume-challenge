@@ -60,3 +60,45 @@ We'll attempt to install directly against the ansible venv and see if that resol
 ```sh
 ansible-galaxy collection install -r requirements.txt
 ```
+
+## Installing cfn lint 
+
+```sh
+pip install cfn-lint
+cfn-lint template.yaml
+```
+
+## Redirect consideration
+
+our yemanenigusseresume.com is'nt redirecting to www.yemanenigusseresume.com 
+
+First i used the below command to check the status. 
+
+```sh
+curl -I yemanenigusseresume.com
+curl -I www.yemanenigusseresume.com
+```
+
+```code 
+HTTP/1.1 301 Moved Permanently
+Server: CloudFront
+Date: Thu, 18 Dec 2025 19:06:57 GMT
+Content-Type: text/html
+Content-Length: 167
+Connection: keep-alive
+Location: https://yemanenigusseresume.com/
+X-Cache: Redirect from cloudfront
+Via: 1.1 ad83caccc6df40ffae4e42b842df398e.cloudfront.net (CloudFront)
+X-Amz-Cf-Pop: LAX54-P3
+Alt-Svc: h3=":443"; ma=86400
+X-Amz-Cf-Id: QEjN7YnstghjRPO_Y3_M7BwU14TzfqLD36rcUqSNqLQmP3LP_oQ5eA==
+```
+Then, i cleaned the cache on the redirect CloudFront by using invalidation 
+
+invalidation
+```sh
+/
+/* 
+```
+
+

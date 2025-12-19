@@ -1,0 +1,21 @@
+- name: Invalidate CloudFront cache
+  hosts: localhost
+  gather_facts: false
+  vars: 
+    cloudfront_distribution_id: EEPJN4BVONALN
+  vars_files:
+    - vaults/prod.yml
+  tasks:
+    - name: Create CloudFront invalidation
+      community.aws.cloudfront_invalidation:
+        region: "{{ AWS_REGION }}"
+        aws_access_key: "{{ AWS_ACCESS_KEY_ID }}"
+        aws_secret_key: "{{ AWS_SECRET_ACCESS_KEY }}"
+        distribution_id: EEPJN4BVONALN
+        target_paths:
+          - "/*"
+        caller_reference: "{{ lookup('pipe', 'date +%s') }}"
+      register: invalidation_result
+    - name: Display invalidation ID
+      ansible.builtin.debug:
+        msg: "Created invalidation with ID: {{ invalidation_result.invalidation.id }}"
