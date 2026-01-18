@@ -1,0 +1,154 @@
+---
+- name: Deploy Azure Front Door (Standard) using Storage Static Website as origin
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  collections:
+    - azure.azcollection
+
+  vars:
+    resource_group: cloud-resume-challenge
+    dns_zone_rg: cloud-resume-challenge
+    rg_location: eastus         # RG location (FIXED)
+    afd_location: global        # Front Door location
+    dns_zone_name: yemanenigusseresume.net
+    domain_fqdn: yemanenigusseresume.net
+    storage_account_name: yemanenigussecrc2026
+    bicep_file: "{{ playbook_dir }}/../deploy-cdn.bicep"
+    built_json: "{{ playbook_dir }}/../deploy-cdn.built.json"
+    deployment_name: crc-cdn-deploy
+
+  tasks:
+    # -------------------------------------------------
+    # Ensure RG exists (required for validate/what-if)
+    # -------------------------------------------------
+    - name: Ensure resource group exists
+      azure.azcollection.azure_rm_resourcegroup:
+        name: "{{ resource_group }}"
+        location: "{{ rg_location }}"
+
+    # -------------------------------------------------
+    # Get Static Website endpoint
+    # -------------------------------------------------
+    - name: Read static website endpoint URL from storage
+      ansible.builtin.command: >
+        az storage account show
+        --resource-group {{ resource_group }}
+        --name {{ storage_account_name }}
+        --query "primaryEndpoints.web"
+        --output tsv
+      register: web_endpoint
+      changed_when: false
+
+    - name: Fail if static website is not enabled
+      ansible.builtin.fail:
+        msg: >
+          Static website is not enabled on storage account '{{ storage_account_name }}'.
+          Enable it first, then re-run.
+      when: web_endpoint.stdout | trim == ""
+
+    - name: Derive origin hostname (hostname only)
+      ansible.builtin.set_fact:
+        origin_hostname: >-
+          {{ web_endpoint.stdout
+             | trim
+             | regex_replace('^https?://', '')
+             | regex_replace('/$', '') }}
+
+    # -------------------------------------------------
+    # Compile Bicep
+    # -------------------------------------------------
+    - name: Compile Bicep -> ARM JSON
+      ansible.builtin.command: >
+        az bicep build
+        --file {{ bicep_file }}
+        --outfile {{ built_json }}
+      changed_when: true
+
+    # -------------------------------------------------
+    # Validate template
+    # -------------------------------------------------
+    - name: Validate ARM template (CLI)
+      ansible.builtin.command: >
+        az deployment group validate
+        --resource-group {{ resource_group }}
+        --template-file {{ built_json }}
+        --parameters
+          location={{ afd_location }}
+          dns_zone_name={{ dns_zone_name }}
+          domain_fqdn={{ domain_fqdn }}
+          dns_zone_rg={{ dns_zone_rg }}
+          origin_hostname={{ origin_hostname }}
+      register: cli_validate
+      changed_when: false
+      failed_when: cli_validate.rc != 0
+
+    # -------------------------------------------------
+    # What-if preview
+    # -------------------------------------------------
+    - name: What-if preview
+      ansible.builtin.command: >
+        az deployment group what-if
+        --resource-group {{ resource_group }}
+        --template-file {{ built_json }}
+        --parameters
+          location={{ afd_location }}
+          dns_zone_name={{ dns_zone_name }}
+          domain_fqdn={{ domain_fqdn }}
+          dns_zone_rg={{ dns_zone_rg }}
+          origin_hostname={{ origin_hostname }}
+        --no-pretty-print
+      register: cli_whatif
+      changed_when: false
+      failed_when: cli_whatif.rc != 0
+
+    - name: Show what-if summary
+      ansible.builtin.debug:
+        msg: "{{ cli_whatif.stdout | default('No what-if output') }}"
+
+    # -------------------------------------------------
+    # Load ARM JSON
+    # -------------------------------------------------
+    - name: Load compiled ARM template
+      ansible.builtin.set_fact:
+        arm_template: "{{ lookup('file', built_json) | from_json }}"
+
+    # -------------------------------------------------
+    # Deploy
+    # -------------------------------------------------
+    - name: Deploy Front Door
+      azure.azcollection.azure_rm_deployment:
+        resource_group: "{{ resource_group }}"
+        name: "{{ deployment_name }}"
+        state: present
+        deployment_mode: incremental
+        location: "{{ rg_location }}" 
+        template: "{{ arm_template }}"
+        parameters:
+          location:
+            value: "{{ afd_location }}"      # ✔ Bicep param only
+          dns_zone_name:
+            value: "{{ dns_zone_name }}"
+          domain_fqdn:
+            value: "{{ domain_fqdn }}"
+          dns_zone_rg:
+            value: "{{ dns_zone_rg }}"
+          origin_hostname:
+            value: "{{ origin_hostname }}"
+      register: deploy_out
+
+    # -------------------------------------------------
+    # Outputs
+    # -------------------------------------------------
+    - name: Extract AFD endpoint hostname
+      ansible.builtin.set_fact:
+        afd_endpoint_host: >-
+          {{ deploy_out.deployment.outputs.afd_endpoint.value
+             | default('unknown') }}
+
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "Origin hostname: {{ origin_hostname }}"
+          - "AFD endpoint: {{ afd_endpoint_host }}"
+          - "Custom domain: {{ domain_fqdn }}"

@@ -8,14 +8,11 @@
 
   vars:
     resource_group: cloud-resume-challenge
-    dns_zone_rg: cloud-resume-challenge
     location: eastus
-    dns_zone_name: 'yemanenigusseresume.net'
-    domain_fqdn: 'yemanenigusseresume.net'
     storage_account_name: yemanenigussecrc2026
-    bicep_file: "{{ playbook_dir }}/../main.bicep"
-    built_json: "{{ playbook_dir }}/../main.built.json"
-    deployment_name: "crc-deploy"
+    bicep_file: "{{ playbook_dir }}/../deploy-storage.bicep"
+    built_json: "{{ playbook_dir }}/../deploy-storage.built.json"
+    deployment_name: "crc-storage-deploy"
 
   tasks:
     - name: Compile Bicep -> ARM JSON (using bicep via azure CLI)
@@ -31,7 +28,7 @@
         az deployment group validate 
         --resource-group {{ resource_group }} 
         --template-file {{ built_json }} 
-        --parameters location={{ location }} storage_account_name={{ storage_account_name }} dns_zone_name={{ dns_zone_name }} domain_fqdn={{ domain_fqdn }} dns_zone_rg={{ dns_zone_rg }}
+        --parameters location={{ location }} storage_account_name={{ storage_account_name }} 
       register: cli_validate
       changed_when: false
       failed_when: cli_validate.rc != 0
@@ -42,7 +39,7 @@
         az deployment group what-if 
         --resource-group {{ resource_group }} 
         --template-file {{ built_json }} 
-        --parameters location={{ location }} storage_account_name={{ storage_account_name }} dns_zone_name={{ dns_zone_name }} domain_fqdn={{ domain_fqdn }} dns_zone_rg={{ dns_zone_rg }}
+        --parameters location={{ location }} storage_account_name={{ storage_account_name }} 
         --no-pretty-print
       register: cli_whatif
       changed_when: false
@@ -76,19 +73,49 @@
             value: "{{ location }}"
           storage_account_name:
             value: "{{ storage_account_name }}"
-          dns_zone_name:
-            value: "{{ dns_zone_name }}"
-          domain_fqdn:
-            value: "{{ domain_fqdn }}"
-          dns_zone_rg:
-            value: "{{ dns_zone_rg }}"
       register: deploy_out
+
+    # --- After storage.bicep is deployed successfully ---
+    - name: Check is static website is enabled 
+      ansible.builtin.command: >
+        az storage blob service-properties show 
+        --account-name {{ storage_account_name }} 
+        --auth-mode login
+        --query "staticWebsite.enabled" 
+        --output tsv
+      register: static_website_enabled
+      changed_when: false
+    
+    - name: Enable Static Website (index.html + 404 to index.html)
+      ansible.builtin.command: >
+        az storage blob service-properties update 
+        --account-name {{ storage_account_name }} 
+        --auth-mode login
+        --static-website 
+        --index-document index.html 
+        --404-document index.html
+      when: static_website_enabled.stdout.strip() != "true"
+      register: enable_static
+      changed_when: enable_static.rc == 0
+
+    - name: Get static website endpoint (hostname only)
+      ansible.builtin.command: >
+          az storage account show 
+          --resource-group {{ resource_group }} 
+          --name {{ storage_account_name }} 
+          --query "primaryEndpoints.web" 
+          --output tsv
+      register: web_ep
+      changed_when: false
+
+    - name: Set origin hostname fact (for  Front door)
+      ansible.builtin.set_fact:
+        origin_hostname: "{{ web_ep.stdout | regex_replace('^https?://', '') | regex_replace('/$', '') }}"
 
     - name: Show deployment result summary
       ansible.builtin.debug:
         msg: 
           - "Provisioning State: {{ deploy_out.deployment.properties.provisioningState | default('N/A') }}"
           - "Storage Account Name: {{ storage_account_name }}"
-          - "Blob Container Name: {{ container_name }}"
           - "Resource Group: {{ resource_group }}"
           - "Location: {{ location }}"
