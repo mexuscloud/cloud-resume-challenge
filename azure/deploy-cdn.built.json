@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "17402627606096731191"
+      "templateHash": "11465576331290513573"
     }
   },
   "parameters": {
@@ -13,31 +13,51 @@
       "type": "string",
       "defaultValue": "global",
       "metadata": {
-        "description": "front door uses global location"
+        "description": "Front Door uses global location"
       }
     },
     "origin_hostname": {
       "type": "string",
       "metadata": {
-        "description": "Origin hostname(e.g., mystorage.z13.web.core.windows.net)"
+        "description": "Origin hostname (e.g. mystorage.z13.web.core.windows.net)"
       }
     },
     "domain_fqdn": {
       "type": "string",
       "metadata": {
-        "description": "Custom domain you will serve on Front Door (use subdomain like www)"
+        "description": "WWW custom domain"
+      }
+    },
+    "apex_fqdn": {
+      "type": "string",
+      "metadata": {
+        "description": "Apex/root domain"
       }
     },
     "dns_zone_name": {
       "type": "string",
       "metadata": {
-        "description": "Azure DNS zone name where that hosts your domain"
+        "description": "Azure DNS zone name"
       }
     },
     "dns_zone_rg": {
       "type": "string",
       "metadata": {
-        "description": "Resource group name where the Azure DNS zone is hosted"
+        "description": "Resource group where DNS zone exists"
+      }
+    },
+    "fd_profile_name": {
+      "type": "string",
+      "defaultValue": "fd-profile-crc",
+      "metadata": {
+        "description": "Stable Front Door profile name"
+      }
+    },
+    "fd_endpoint_name": {
+      "type": "string",
+      "defaultValue": "fd-endpoint-crc",
+      "metadata": {
+        "description": "Stable Front Door endpoint name"
       }
     }
   },
@@ -45,7 +65,7 @@
     {
       "type": "Microsoft.Cdn/profiles",
       "apiVersion": "2021-06-01",
-      "name": "[format('fd-profile-{0}', uniqueString(resourceGroup().id))]",
+      "name": "[parameters('fd_profile_name')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_AzureFrontDoor"
@@ -54,57 +74,55 @@
     {
       "type": "Microsoft.Cdn/profiles/afdEndpoints",
       "apiVersion": "2021-06-01",
-      "name": "[format('{0}/{1}', format('fd-profile-{0}', uniqueString(resourceGroup().id)), format('ep-{0}', uniqueString(resourceGroup().id)))]",
+      "name": "[format('{0}/{1}', parameters('fd_profile_name'), parameters('fd_endpoint_name'))]",
       "location": "[parameters('location')]",
       "properties": {
         "enabledState": "Enabled"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Cdn/profiles', format('fd-profile-{0}', uniqueString(resourceGroup().id)))]"
+        "[resourceId('Microsoft.Cdn/profiles', parameters('fd_profile_name'))]"
       ]
     },
     {
       "type": "Microsoft.Cdn/profiles/originGroups",
       "apiVersion": "2021-06-01",
-      "name": "[format('{0}/{1}', format('fd-profile-{0}', uniqueString(resourceGroup().id)), 'og-default')]",
+      "name": "[format('{0}/{1}', parameters('fd_profile_name'), 'og-static')]",
       "properties": {
         "healthProbeSettings": {
           "probePath": "/index.html",
-          "probeRequestType": "GET",
           "probeProtocol": "Https",
+          "probeRequestType": "GET",
           "probeIntervalInSeconds": 120
         },
         "loadBalancingSettings": {
           "sampleSize": 4,
-          "successfulSamplesRequired": 2,
-          "additionalLatencyInMilliseconds": 0
-        },
-        "sessionAffinityState": "Disabled"
+          "successfulSamplesRequired": 2
+        }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Cdn/profiles', format('fd-profile-{0}', uniqueString(resourceGroup().id)))]"
+        "[resourceId('Microsoft.Cdn/profiles', parameters('fd_profile_name'))]"
       ]
     },
     {
       "type": "Microsoft.Cdn/profiles/originGroups/origins",
       "apiVersion": "2021-06-01",
-      "name": "[format('{0}/{1}/{2}', format('fd-profile-{0}', uniqueString(resourceGroup().id)), 'og-default', 'origin-staticweb')]",
+      "name": "[format('{0}/{1}/{2}', parameters('fd_profile_name'), 'og-static', 'origin-static-web')]",
       "properties": {
         "hostName": "[parameters('origin_hostname')]",
+        "originHostHeader": "[parameters('origin_hostname')]",
         "httpPort": 80,
         "httpsPort": 443,
-        "originHostHeader": "[parameters('origin_hostname')]",
         "priority": 1,
         "weight": 1000
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Cdn/profiles/originGroups', format('fd-profile-{0}', uniqueString(resourceGroup().id)), 'og-default')]"
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('fd_profile_name'), 'og-static')]"
       ]
     },
     {
       "type": "Microsoft.Cdn/profiles/customDomains",
       "apiVersion": "2021-06-01",
-      "name": "[format('{0}/{1}', format('fd-profile-{0}', uniqueString(resourceGroup().id)), format('cd-{0}', uniqueString(resourceGroup().id)))]",
+      "name": "[format('{0}/{1}', parameters('fd_profile_name'), 'cd-www')]",
       "properties": {
         "hostName": "[parameters('domain_fqdn')]",
         "azureDnsZone": {
@@ -116,46 +134,130 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Cdn/profiles', format('fd-profile-{0}', uniqueString(resourceGroup().id)))]"
+        "[resourceId('Microsoft.Cdn/profiles', parameters('fd_profile_name'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/customDomains",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', parameters('fd_profile_name'), 'cd-apex')]",
+      "properties": {
+        "hostName": "[parameters('apex_fqdn')]",
+        "azureDnsZone": {
+          "id": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('dns_zone_rg')), 'Microsoft.Network/dnsZones', parameters('dns_zone_name'))]"
+        },
+        "tlsSettings": {
+          "certificateType": "ManagedCertificate",
+          "minimumTlsVersion": "TLS12"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('fd_profile_name'))]"
       ]
     },
     {
       "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
       "apiVersion": "2021-06-01",
-      "name": "[format('{0}/{1}/{2}', format('fd-profile-{0}', uniqueString(resourceGroup().id)), format('ep-{0}', uniqueString(resourceGroup().id)), 'route-static')]",
+      "name": "[format('{0}/{1}/{2}', parameters('fd_profile_name'), parameters('fd_endpoint_name'), 'route-www')]",
       "properties": {
         "originGroup": {
-          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', format('fd-profile-{0}', uniqueString(resourceGroup().id)), 'og-default')]"
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('fd_profile_name'), 'og-static')]"
         },
         "supportedProtocols": [
           "Http",
           "Https"
         ],
         "httpsRedirect": "Enabled",
-        "linkToDefaultDomain": "Disabled",
+        "linkToDefaultDomain": "Enabled",
+        "patternsToMatch": [
+          "/*"
+        ],
+        "forwardingProtocol": "MatchRequest",
+        "enabledState": "Enabled",
         "customDomains": [
           {
-            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', format('fd-profile-{0}', uniqueString(resourceGroup().id)), format('cd-{0}', uniqueString(resourceGroup().id)))]"
+            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', parameters('fd_profile_name'), 'cd-www')]"
           }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('fd_profile_name'), parameters('fd_endpoint_name'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('fd_profile_name'), 'og-static')]",
+        "[resourceId('Microsoft.Cdn/profiles/customDomains', parameters('fd_profile_name'), 'cd-www')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', parameters('fd_profile_name'), parameters('fd_endpoint_name'), 'route-apex')]",
+      "properties": {
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('fd_profile_name'), 'og-static')]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
         ],
         "patternsToMatch": [
           "/*"
         ],
         "forwardingProtocol": "MatchRequest",
-        "enabledState": "Enabled"
+        "enabledState": "Enabled",
+        "customDomains": [
+          {
+            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', parameters('fd_profile_name'), 'cd-apex')]"
+          }
+        ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Cdn/profiles/customDomains', format('fd-profile-{0}', uniqueString(resourceGroup().id)), format('cd-{0}', uniqueString(resourceGroup().id)))]",
-        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', format('fd-profile-{0}', uniqueString(resourceGroup().id)), format('ep-{0}', uniqueString(resourceGroup().id)))]",
-        "[resourceId('Microsoft.Cdn/profiles/originGroups', format('fd-profile-{0}', uniqueString(resourceGroup().id)), 'og-default')]",
-        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', format('fd-profile-{0}', uniqueString(resourceGroup().id)), 'og-default', 'origin-staticweb')]"
+        "[resourceId('Microsoft.Cdn/profiles/customDomains', parameters('fd_profile_name'), 'cd-apex')]",
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('fd_profile_name'), parameters('fd_endpoint_name'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('fd_profile_name'), 'og-static')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/ruleSets",
+      "apiVersion": "2025-04-15",
+      "name": "[format('{0}/{1}', parameters('fd_profile_name'), 'rsApexRedirect')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('fd_profile_name'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/ruleSets/rules",
+      "apiVersion": "2025-04-15",
+      "name": "[format('{0}/{1}/{2}', parameters('fd_profile_name'), 'rsApexRedirect', 'redirectToWww')]",
+      "properties": {
+        "order": 1,
+        "actions": [
+          {
+            "name": "UrlRedirect",
+            "parameters": {
+              "redirectType": "Moved",
+              "destinationProtocol": "Https",
+              "customHostname": "[parameters('domain_fqdn')]",
+              "typeName": "DeliveryRuleUrlRedirectActionParameters"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/ruleSets', parameters('fd_profile_name'), 'rsApexRedirect')]"
       ]
     }
   ],
   "outputs": {
     "afd_endpoint": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', format('fd-profile-{0}', uniqueString(resourceGroup().id)), format('ep-{0}', uniqueString(resourceGroup().id))), '2021-06-01').hostName]"
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('fd_profile_name'), parameters('fd_endpoint_name')), '2021-06-01').hostName]"
+    },
+    "afd_profile_name": {
+      "type": "string",
+      "value": "[parameters('fd_profile_name')]"
+    },
+    "afd_endpoint_id": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('fd_profile_name'), parameters('fd_endpoint_name'))]"
     }
   }
 }

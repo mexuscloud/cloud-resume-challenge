@@ -85,3 +85,5 @@ In Azure a storage Account would be managed by Iac but wheater a container shoul
 
 We observed that Azure Bicep when renaming our container, it didn't remove the previous name one making us think that maybe containers just like object files should be handle by ansible if containers are not going to act idempotent within Azure Bicep. 
 
+
+

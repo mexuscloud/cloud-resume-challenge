@@ -15,9 +15,11 @@
     build_dir: "{{ frontend_dir }}/dist"
 
     # optional Azure CDN
-    # cdn_resource_group: "{{resource_group}}"
-    # cdn_profile_name: resume-cdn-profile
-    # cdn_endpoint_name: resume-cdn-endpoint
+    cdn_resource_group: cloud-resume-challenge
+    profile_name: "fd-profile-vyifg5kgsczr4"      # Front Door profile name
+    endpoint_name: "ep-vyifg5kgsczr4"
+    paths:
+      - '/*'   
 
   tasks:
     - name: Install Node dependencies (clean, reproducable)
@@ -102,16 +104,13 @@
           - "index.html uploaded: {{ upload_index is succeeded }}"
           - "misc files uploaded: {{ top_level_files.files | length }}"
 
-  # ------- Optional: Purge Azure CDN  (requires Azure CLI) --------
-  # - name: Purge Azure CDN endpoint (/*)
-  #    when: 
-  #      - cdn_profile | length > 0
-  #      - cdn_endpoint | length > 0
-  #   ansible.builtin.command: > 
-  #     az cdn endpoint purge 
-  #     --resource-group {{ cdn_resource_group }} 
-  #     --profile-name {{ cdn_profile }} 
-  #     --name {{ cdn_endpoint }} 
-  #     --content-paths '/*'
-  #   register: cdn_purge 
-  #   changed_when: cdn_purge.rc == 0  
+  # ------- Purge Azure CDN  (requires Azure CLI) --------
+    - name: Purge AFD endpoint cache
+      ansible.builtin.command: >
+        az afd endpoint purge
+        --resource-group {{ resource_group }}
+        --profile-name {{ profile_name }}
+        --endpoint-name {{ endpoint_name }}
+        --content-paths {{ paths | to_json }}
+      register: purge_out
+      changed_when: purge_out.rc == 0 
