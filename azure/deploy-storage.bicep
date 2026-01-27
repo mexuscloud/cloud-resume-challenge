@@ -11,8 +11,20 @@ param storage_account_name string
 resource sa 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storage_account_name
   location: location
-  sku: {name: 'Standard_LRS'}
   kind: 'StorageV2'
+  sku: {name: 'Standard_LRS'}
 }
 
-output storage_account_name string = storage_account_name
+resource staticWebsite 'Microsoft.Storage/storageAccounts/staticWebsites@2021-09-01' = {
+  name: 'default'
+  parent: sa
+  properties: {
+    indexDocument: 'index.html'
+    error404Document: 'index.html'
+  }
+}
+
+// Static website origin host (e.g., mystorage.z13.web.core.windows.net)
+var staticHost = replace(replace(sa.properties.primaryEndpoints.web, 'https://', ''), '/', '')
+
+output storageStaticSiteUrl string = sa.properties.primaryEndpoints.web

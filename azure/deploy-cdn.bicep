@@ -78,17 +78,20 @@ resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
   }
 }
 
-/* ===============================
+/*
+We're not using Azure DNS anymore and instead we are using CloudFlare 
+
+===============================
    Existing DNS Zone
-   =============================== */
+   =============================== 
 resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
   name: dns_zone_name
   scope: resourceGroup(dns_zone_rg)
 }
 
-/* ===============================
+   ===============================
    Custom Domains
-   =============================== */
+   ===============================
 resource wwwDomain 'Microsoft.Cdn/profiles/customDomains@2021-06-01' = {
   name: 'cd-www'
   parent: fd
@@ -119,9 +122,11 @@ resource apexDomain 'Microsoft.Cdn/profiles/customDomains@2021-06-01' = {
   }
 }
 
-/* ===============================
+
+
+  ===============================
    Routes
-   =============================== */
+   ===============================
 resource routeWww 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   name: 'route-www'
   parent: fdEndpoint
@@ -161,6 +166,8 @@ resource routeApex 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   }
 }
 
+*/
+
 /* ===============================
    Apex → WWW Redirect Rule
    =============================== */
@@ -190,7 +197,8 @@ resource rsApexRule 'Microsoft.Cdn/profiles/ruleSets/rules@2025-04-15' = {
 
 /* ===============================
    Outputs
-   =============================== */
+   =============================== 
 output afd_endpoint string = fdEndpoint.properties.hostName
 output afd_profile_name string = fd.name
 output afd_endpoint_id string = fdEndpoint.id
+*/

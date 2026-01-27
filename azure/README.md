@@ -86,4 +86,20 @@ In Azure a storage Account would be managed by Iac but wheater a container shoul
 We observed that Azure Bicep when renaming our container, it didn't remove the previous name one making us think that maybe containers just like object files should be handle by ansible if containers are not going to act idempotent within Azure Bicep. 
 
 
+## Moving to CloudFlare from Azure Frontdoor 
+
+we moved the nameservers to cloudFlare so we can ustilize it for our static website hosting beacuse azure has eventually became expensive 
+
+we teared down our azure frontdoor manually from azure portal. 
+
+on CloudFlare, we start by signing up for a new account and then star on boarding a new domain. e.g. yemanenigusseresume.net 
+
+Some of the steps taken to achive this goal are as below: 
+Added domain and updated nameservers in cloudFlare 
+Added Azure storage 
+Created a worker.js and deployed
+Added a worker route 
+
+
+
 
