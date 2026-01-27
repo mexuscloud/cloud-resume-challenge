@@ -22,6 +22,7 @@ resource staticWebsite 'Microsoft.Storage/storageAccounts/staticWebsites@2021-09
     indexDocument: 'index.html'
     error404Document: 'index.html'
   }
+  
 }
 
 // Static website origin host (e.g., mystorage.z13.web.core.windows.net)

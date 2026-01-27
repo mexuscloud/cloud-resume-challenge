@@ -100,6 +100,20 @@ Added Azure storage
 Created a worker.js and deployed
 Added a worker route 
 
+## Purge cache for cloudFlare for Azure 
+
+Created a purg.yml with Credentials for CloudFlare kept in Ansible Vault. 
+
+### Edit Vault 
+
+We are going to store all of our configuration in a vault. 
+
+```sh
+cd azure 
+ansible-vault create playbooks/vaults/prod.yml  
+ansible-vault edit playbooks/vaults/prod.yml  
+ansible-vault view playbooks/vaults/prod.yml  
+
 
 
 

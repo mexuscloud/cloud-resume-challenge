@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 set -e
-ansible-playbook playbooks/purg.yml
+ansible-playbook playbooks/purg.yml --ask-vault-pass 
