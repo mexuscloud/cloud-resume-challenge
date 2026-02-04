@@ -94,3 +94,13 @@ Follwed the verification link seen on the error message and then added a user wi
 
   fatal: [localhost]: FAILED! => {"changed": false, "cmd": "/usr/bin/terraform apply -no-color -input=false -auto-approve -lock=true /tmp/tmpgl_2oplq.tfplan", "msg": "\nError: googleapi: Error 403: Another user owns the domain yemanenigusseresume.org or a parent domain. You can either verify domain ownership at https://search.google.com/search-console/welcome?new_domain_name=yemanenigusseresume.org or find the current owner and ask that person to create the bucket for you, forbidden\n\n  with google_storage_bucket.static-site,\n  on main.tf line 6, in resource \"google_storage_bucket\" \"static-site\":\n   6: resource \"google_storage_bucket\" \"static-site\" {", "rc": 1, "stderr": "\nError: googleapi: Error 403: Another user owns the domain yemanenigusseresume.org or a parent domain. You can either verify domain ownership at https://search.google.com/search-console/welcome?new_domain_name=yemanenigusseresume.org or find the current owner and ask that person to create the bucket for you, forbidden\n\n  with google_storage_bucket.static-site,\n  on main.tf line 6, in resource \"google_storage_bucket\" \"static-site\":\n   6: resource \"google_storage_bucket\" \"static-site\" {\n\n", "stderr_lines": ["", "Error: googleapi: Error 403: Another user owns the domain yemanenigusseresume.org or a parent domain. You can either verify domain ownership at https://search.google.com/search-console/welcome?new_domain_name=yemanenigusseresume.org or find the current owner and ask that person to create the bucket for you, forbidden", "", "  with google_storage_bucket.static-site,", "  on main.tf line 6, in resource \"google_storage_bucket\" \"static-site\":", "   6: resource \"google_storage_bucket\" \"static-site\" {", ""], "stdout": "google_storage_bucket.static-site: Creating...\n", "stdout_lines": ["google_storage_bucket.static-site: Creating..."]}
 ```
+
+### Install gcloud 
+
+```sh
+sudo apt-get update
+sudo apt-get install apt-transport-https ca-certificates gnupg curl
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+sudo apt-get update && sudo apt-get install google-cloud-cli
+```

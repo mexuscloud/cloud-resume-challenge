@@ -9,22 +9,62 @@
 
   vars:
     gcp_project: "cloud-resume-challenge-485617"
-    gcs_bucket: "yemanenigusseresume.org"
+    gcs_bucket: "yemanenigusseresume.org"      # existing bucket name
     project_root: "{{ playbook_dir | realpath }}/../.."
     frontend_dir: "{{ project_root }}/frontend"
     build_dir: "{{ frontend_dir }}/dist"
-  
+
   environment:
     CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
-    
+
   tasks:
-    - name: Ensure required CLIs are present 
-      ansible.builtin.command: "{{ item }} --version"
-      loop:
-        - gsutil
-        - npm
+    - name: Ensure gcloud CLI is installed
+      ansible.builtin.command: gcloud --version
       changed_when: false
 
+    - name: Ensure Node is available (optional sanity check)
+      ansible.builtin.command: node --version
+      changed_when: false
+      failed_when: false
+
+    # --- Auth like your deploy.yml (temporary SA key file) ---
+    - name: Create temporary file for SA key
+      ansible.builtin.tempfile:
+        state: file
+        suffix: ".json"
+      register: sa_key_file
+
+    - name: Write GCP service account key to a file (from Vault)
+      ansible.builtin.copy:
+        dest: "{{ sa_key_file.path }}"
+        content: "{{ gcp_sa_key_json }}"
+        mode: '0600'
+
+    - name: Activate service account for gcloud CLI
+      ansible.builtin.command:
+        argv:
+          - gcloud
+          - auth
+          - activate-service-account
+          - --key-file={{ sa_key_file.path }}
+      changed_when: false
+
+    - name: Set gcloud project
+      ansible.builtin.command:
+        argv: [ "gcloud", "config", "set", "project", "{{ gcp_project }}" ]
+      changed_when: false
+
+    - name: Verify active account (debug)
+      ansible.builtin.command:
+        argv: [ "gcloud", "auth", "list", "--filter=status:ACTIVE", "--format=value(account)" ]
+      register: active_acct
+      changed_when: false
+
+    - name: Show active account
+      ansible.builtin.debug:
+        var: active_acct.stdout
+
+    # --- Build ---
     - name: Install node dependencies
       community.general.npm:
         path: "{{ frontend_dir }}"
@@ -47,46 +87,59 @@
         msg: "Build dir {{ build_dir }} not found. Build failed."
       when: not build_stat.stat.exists
 
-    # ------------------------------------------------------------
-    # Upload hashed assets with long cache-control
-    # ------------------------------------------------------------
-    - name: Upload static assets with long cache-control
-      ansible.builtin.command: >
-        gsutil -m rsync -r -d -x "index.html$" {{ build_dir }}/assets gs://{{ bucket_name }}/assets
-      environment:
-        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
-      register: sync_assets
-      
-    - name: Set long cache headers for assets
-      ansible.builtin.command: >
-        gsutil -m setmeta -h "Cache-Control:public, max-age=31536000" gs://{{ bucket_name }}/assets/**
-      environment:
-        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
+    # --- Upload ---
+    - name: Sync build output to GCS bucket (delete removed files)
+      ansible.builtin.command:
+        argv:
+          - gcloud
+          - storage
+          - rsync
+          - --recursive
+          - --delete-unmatched-destination-objects
+          - "{{ build_dir }}"
+          - "gs://{{ gcs_bucket }}"
+      register: rsync_out
+      changed_when: "'Copied' in rsync_out.stdout or 'Removing' in rsync_out.stdout"
 
-    # ------------------------------------------------------------
-    # Upload index.html with no-cache
-    # ------------------------------------------------------------
-    - name: Upload index.html with no-store
-      ansible.builtin.command: >
-        gsutil cp -h "Cache-Control:no-store" {{ build_dir }}/index.html gs://{{ bucket_name }}/index.html
-      environment:
-        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
+    # --- Cache-Control headers ---
+    # IMPORTANT: use argv and NO SPACES after commas in cache-control values.
 
-    # ------------------------------------------------------------
-    # Upload other top-level files (favicon, robots.txt, etc.)
-    # ------------------------------------------------------------
-    - name: Upload top-level files (excluding index.html and assets)
-      ansible.builtin.command: >
-        gsutil -m rsync -r -x "(index.html|assets/.*)" {{ build_dir }} gs://{{ bucket_name }}
-      environment:
-        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
-      register: sync_misc
+    - name: Apply long cache to assets/**
+      ansible.builtin.command:
+        argv:
+          - gcloud
+          - storage
+          - objects
+          - update
+          - --recursive
+          - --add-cache-control=public,max-age=31536000,immutable
+          - "gs://{{ gcs_bucket }}/assets/"
+      register: cache_assets
+      changed_when: "'Updating' in cache_assets.stdout"
+      failed_when: false   # don't fail if assets/ doesn't exist yet
 
-    # ------------------------------------------------------------
-    # Cloud CDN cache invalidation (GCP equivalent)
-    # ------------------------------------------------------------
-    - name: Cache invalidation note
-      ansible.builtin.debug:
-        msg: >
-          GCP Cloud CDN does not support CloudFront-style invalidations.
-          Cache busting is handled by hashed filenames + no-store on index.html.
+    - name: List top-level files in build dir
+      ansible.builtin.find:
+        path: "{{ build_dir }}"
+        file_type: file
+        recurse: no
+      register: top_files
+
+    - name: Apply short cache to top-level files
+      ansible.builtin.command:
+        argv:
+          - gcloud
+          - storage
+          - objects
+          - update
+          - --add-cache-control=public,max-age=300
+          - "gs://{{ gcs_bucket }}/{{ item.path | basename }}"
+      loop: "{{ top_files.files }}"
+      register: cache_root
+      changed_when: >
+        cache_root is defined and (
+          (cache_root.stdout is defined and 'Updating' in cache_root.stdout) or
+          (cache_root.results is defined and
+           (cache_root.results | selectattr('stdout','search','Updating') | list | length) > 0)
+        )
+      failed_when: false
