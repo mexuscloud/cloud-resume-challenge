@@ -34,3 +34,18 @@ Thumbs.db
 
 # others 
 gcp-key.json
+
+########################################
+# Ansible
+########################################
+
+# Ignore unencrypted secret files
+*.vault
+*.secret
+*.plaintext.yml
+*.decrypted.yml
+
+# Ignore temporary decrypted files created during editing
+*~ 
+*.swp
+*.bak
