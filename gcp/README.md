@@ -73,4 +73,24 @@ ansible-vault edit playbooks/vaults/prod.yml
 ansible-vault view playbooks/vaults/prod.yml  
 ```
 
+we encountered the below error when trying to deploy our bucket. The bucket name - `yemanenigusseresume.org` is the same as our domain and the ownership had to verified for it to pass as a bucket name. 
 
+Follwed the verification link seen on the error message and then added a user with `owner` permission and then added the email ID of our  service account created in gcp inside the settings with in the google search console. 
+
+> 
+```text
+[ERROR]: Task failed: Module failed: 
+  Error: googleapi: Error 403: Another user owns the domain yemanenigusseresume.org or a parent domain. You can either verify domain ownership at https://search.google.com/search-console/welcome?new_domain_name=yemanenigusseresume.org or find the current owner and ask that person to create the bucket for you, forbidden
+
+    with google_storage_bucket.static-site,
+    on main.tf line 6, in resource "google_storage_bucket" "static-site":
+    6: resource "google_storage_bucket" "static-site" {
+  Origin: /workspaces/cloud-resume-challenge/gcp/playbooks/deploy.yml:31:7
+
+  29         mode: '0600'
+  30
+  31     - name: Terraform init/plan/apply
+          ^ column 7
+
+  fatal: [localhost]: FAILED! => {"changed": false, "cmd": "/usr/bin/terraform apply -no-color -input=false -auto-approve -lock=true /tmp/tmpgl_2oplq.tfplan", "msg": "\nError: googleapi: Error 403: Another user owns the domain yemanenigusseresume.org or a parent domain. You can either verify domain ownership at https://search.google.com/search-console/welcome?new_domain_name=yemanenigusseresume.org or find the current owner and ask that person to create the bucket for you, forbidden\n\n  with google_storage_bucket.static-site,\n  on main.tf line 6, in resource \"google_storage_bucket\" \"static-site\":\n   6: resource \"google_storage_bucket\" \"static-site\" {", "rc": 1, "stderr": "\nError: googleapi: Error 403: Another user owns the domain yemanenigusseresume.org or a parent domain. You can either verify domain ownership at https://search.google.com/search-console/welcome?new_domain_name=yemanenigusseresume.org or find the current owner and ask that person to create the bucket for you, forbidden\n\n  with google_storage_bucket.static-site,\n  on main.tf line 6, in resource \"google_storage_bucket\" \"static-site\":\n   6: resource \"google_storage_bucket\" \"static-site\" {\n\n", "stderr_lines": ["", "Error: googleapi: Error 403: Another user owns the domain yemanenigusseresume.org or a parent domain. You can either verify domain ownership at https://search.google.com/search-console/welcome?new_domain_name=yemanenigusseresume.org or find the current owner and ask that person to create the bucket for you, forbidden", "", "  with google_storage_bucket.static-site,", "  on main.tf line 6, in resource \"google_storage_bucket\" \"static-site\":", "   6: resource \"google_storage_bucket\" \"static-site\" {", ""], "stdout": "google_storage_bucket.static-site: Creating...\n", "stdout_lines": ["google_storage_bucket.static-site: Creating..."]}
+```

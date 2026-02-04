@@ -1,0 +1,92 @@
+---
+- name: Build Vite App and Upload to GCS
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - vaults/prod.yml
+
+  vars:
+    gcp_project: "cloud-resume-challenge-485617"
+    gcs_bucket: "yemanenigusseresume.org"
+    project_root: "{{ playbook_dir | realpath }}/../.."
+    frontend_dir: "{{ project_root }}/frontend"
+    build_dir: "{{ frontend_dir }}/dist"
+  
+  environment:
+    CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
+    
+  tasks:
+    - name: Ensure required CLIs are present 
+      ansible.builtin.command: "{{ item }} --version"
+      loop:
+        - gsutil
+        - npm
+      changed_when: false
+
+    - name: Install node dependencies
+      community.general.npm:
+        path: "{{ frontend_dir }}"
+        state: present
+        production: false
+        ci: true
+
+    - name: Build Vite App
+      ansible.builtin.shell: npm run build
+      args:
+        chdir: "{{ frontend_dir }}"
+
+    - name: Confirm build dir exists
+      ansible.builtin.stat:
+        path: "{{ build_dir }}"
+      register: build_stat
+
+    - name: Fail if build output missing
+      ansible.builtin.fail:
+        msg: "Build dir {{ build_dir }} not found. Build failed."
+      when: not build_stat.stat.exists
+
+    # ------------------------------------------------------------
+    # Upload hashed assets with long cache-control
+    # ------------------------------------------------------------
+    - name: Upload static assets with long cache-control
+      ansible.builtin.command: >
+        gsutil -m rsync -r -d -x "index.html$" {{ build_dir }}/assets gs://{{ bucket_name }}/assets
+      environment:
+        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
+      register: sync_assets
+      
+    - name: Set long cache headers for assets
+      ansible.builtin.command: >
+        gsutil -m setmeta -h "Cache-Control:public, max-age=31536000" gs://{{ bucket_name }}/assets/**
+      environment:
+        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
+
+    # ------------------------------------------------------------
+    # Upload index.html with no-cache
+    # ------------------------------------------------------------
+    - name: Upload index.html with no-store
+      ansible.builtin.command: >
+        gsutil cp -h "Cache-Control:no-store" {{ build_dir }}/index.html gs://{{ bucket_name }}/index.html
+      environment:
+        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
+
+    # ------------------------------------------------------------
+    # Upload other top-level files (favicon, robots.txt, etc.)
+    # ------------------------------------------------------------
+    - name: Upload top-level files (excluding index.html and assets)
+      ansible.builtin.command: >
+        gsutil -m rsync -r -x "(index.html|assets/.*)" {{ build_dir }} gs://{{ bucket_name }}
+      environment:
+        CLOUDSDK_CORE_PROJECT: "{{ gcp_project }}"
+      register: sync_misc
+
+    # ------------------------------------------------------------
+    # Cloud CDN cache invalidation (GCP equivalent)
+    # ------------------------------------------------------------
+    - name: Cache invalidation note
+      ansible.builtin.debug:
+        msg: >
+          GCP Cloud CDN does not support CloudFront-style invalidations.
+          Cache busting is handled by hashed filenames + no-store on index.html.
