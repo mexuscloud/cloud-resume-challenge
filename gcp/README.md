@@ -47,7 +47,7 @@ pipx install --include-deps ansible
 
 We'll need to store the contents of the gcp key in our vault. 
 
-eg. 
+e.g. 
 
 ```sh
 gcp_sa_key_json: |
@@ -104,3 +104,12 @@ curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor 
 echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 sudo apt-get update && sudo apt-get install google-cloud-cli
 ```
+
+## Considerations for CDN 
+
+GCP requires you to run a Global External Load Balancer and it appears to be more expensive than other provider. 
+Even though using Cloud CDN would demonstrate GCP knowledge, we will implement a more cost effective solution. 
+
+> If you have only a single domain/site and low traffic, the fixed cost (~US $18/month) could dominate. 
+
+$18 for a personal website that just have CDN is not worth it. We'll attempt to use CloudFlare instead. 
